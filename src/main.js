@@ -1,3 +1,4 @@
+import './style.css'; 
 document.addEventListener('DOMContentLoaded', () => {
   const userList = document.getElementById('user-list');
   const loadingIndicator = document.getElementById('loading');
