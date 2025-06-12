@@ -1,58 +1,80 @@
-import './style.css'; 
-document.addEventListener('DOMContentLoaded', () => {
-  const userList = document.getElementById('user-list');
-  const loadingIndicator = document.getElementById('loading');
+import './style.css';
 
-  // Hàm để gọi API và hiển thị dữ liệu
-  async function fetchUsers() {
-      loadingIndicator.classList.add('show'); // Hiển thị chỉ báo "Đang tải..."
-      userList.innerHTML = ''; // Xóa danh sách cũ (nếu có)
+// 1. Lấy tham chiếu đến các phần tử HTML
+const dataList = document.getElementById('data-list');
+const loadingIndicator = document.getElementById('loading');
+const fetchUsersBtn = document.getElementById('fetchUsersBtn');
+const fetchPostsBtn = document.getElementById('fetchPostsBtn');
 
-      try {
-          // Gọi API bằng fetch
-          const response = await fetch('https://jsonplaceholder.typicode.com/users');
+// =======================================================
+// PHẦN LOGIC HIỂN THỊ DỮ LIỆU
+// =======================================================
 
-          // Kiểm tra xem yêu cầu có thành công không
-          if (!response.ok) {
-              throw new Error(`Lỗi mạng: ${response.status}`);
-          }
+// Hàm để hiển thị danh sách Người dùng
+function displayUsers(users) {
+    users.forEach(user => {
+        const listItem = document.createElement('li');
+        listItem.className = 'user-item'; // Dùng lại class CSS cũ
+        listItem.innerHTML = `
+            <h2>${user.name}</h2>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Điện thoại:</strong> ${user.phone}</p>
+        `;
+        dataList.appendChild(listItem);
+    });
+}
 
-          // Chuyển đổi dữ liệu trả về sang JSON
-          const users = await response.json();
+// Hàm để hiển thị danh sách Bài viết
+function displayPosts(posts) {
+    posts.forEach(post => {
+        const listItem = document.createElement('li');
+        listItem.className = 'user-item'; // Dùng lại class CSS cũ cho đồng bộ
+        listItem.innerHTML = `
+            <h2>${post.title}</h2>
+            <p>${post.body}</p>
+        `;
+        dataList.appendChild(listItem);
+    });
+}
 
-          // Hiển thị dữ liệu lên giao diện
-          displayUsers(users);
+// =======================================================
+// PHẦN LOGIC GỌI API
+// =======================================================
 
-      } catch (error) {
-          console.error('Không thể tải dữ liệu người dùng:', error);
-          userList.innerHTML = '<li>Đã xảy ra lỗi khi tải dữ liệu. Vui lòng thử lại.</li>';
-      } finally {
-          loadingIndicator.classList.remove('show'); // Ẩn chỉ báo "Đang tải..."
-      }
-  }
+// Hàm gọi API chung
+async function fetchData(apiUrl, displayFunction) {
+    // Hiển thị chỉ báo "Đang tải..." và xóa dữ liệu cũ
+    loadingIndicator.style.display = 'block';
+    dataList.innerHTML = '';
 
-  // Hàm để tạo HTML cho mỗi người dùng và chèn vào danh sách
-  function displayUsers(users) {
-      if (users.length === 0) {
-          userList.innerHTML = '<li>Không tìm thấy người dùng nào.</li>';
-          return;
-      }
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            throw new Error(`Lỗi mạng: ${response.status}`);
+        }
+        const data = await response.json();
+        // Gọi hàm hiển thị tương ứng được truyền vào
+        displayFunction(data);
+    } catch (error) {
+        console.error('Không thể tải dữ liệu:', error);
+        dataList.innerHTML = '<li>Đã xảy ra lỗi khi tải dữ liệu.</li>';
+    } finally {
+        // Luôn ẩn chỉ báo "Đang tải..." sau khi hoàn tất
+        loadingIndicator.style.display = 'none';
+    }
+}
 
-      users.forEach(user => {
-          const listItem = document.createElement('li');
-          listItem.classList.add('user-item');
+// =======================================================
+// PHẦN BẮT SỰ KIỆN
+// =======================================================
 
-          listItem.innerHTML = `
-              <h2>${user.name}</h2>
-              <p><strong>Email:</strong> ${user.email}</p>
-              <p><strong>Điện thoại:</strong> ${user.phone}</p>
-              <p><strong>Website:</strong> <a href="http://${user.website}" target="_blank">${user.website}</a></p>
-          `;
+// 2. Thêm sự kiện 'click' cho nút "Tải Người dùng"
+fetchUsersBtn.addEventListener('click', () => {
+    fetchData('https://jsonplaceholder.typicode.com/users', displayUsers);
+});
 
-          userList.appendChild(listItem);
-      });
-  }
-
-  // Gọi hàm để bắt đầu quá trình
-  fetchUsers();
+// 3. Thêm sự kiện 'click' cho nút "Tải Bài viết"
+fetchPostsBtn.addEventListener('click', () => {
+    // Lấy 10 bài viết đầu tiên cho ngắn gọn
+    fetchData('https://jsonplaceholder.typicode.com/posts?_limit=10', displayPosts);
 });
